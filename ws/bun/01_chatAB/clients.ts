@@ -1,30 +1,41 @@
 import type { ClientWSMessage } from "./server";
 
-const wsA = new WebSocket('ws://localhost:3000');
+const wsA = new WebSocket("ws://localhost:3000");
+const wsB = new WebSocket("ws://localhost:3000");
 
-wsA.onopen = () => {
-  console.log('wsA opened');
-  wsA.send('Hello, world!');
-}
+const names = ["Alice", "Bob"];
 
-wsA.onclose = () => {
-  console.log('wsA closed');
-}
+[wsA, wsB].forEach((ws, idx) => {
+  const name = names[idx];
 
-wsA.onmessage = (event) => {
-  console.log('wsA received:', event.data);
-}
+  ws.onopen = () => {
+    console.log(`[${name}] connection established`);
+    ws.send(`[${name}] Hello, world!`);
+  };
+
+  ws.onclose = () => {
+    console.log(`[${name}] closed`);
+  };
+
+  ws.onmessage = (event) => {
+    console.log(`[${name}] received: ${event.data}`);
+  };
+});
 
 async function main() {
-  let idx = 0;
-  setInterval(() => {
-    const msgData: ClientWSMessage = {
-      clientId: 'Bernie',
-      cmd: 'chat',
-      msg: `[${idx++}] Hello, B!`
-    };
-    wsA.send(JSON.stringify({ data: msgData }));
-  }, 1000);
+  [wsA, wsB].forEach((ws, idx) => {
+    const name = names[idx];
+
+    let msgIdx = 0;
+    setInterval(() => {
+      const msgData: ClientWSMessage = {
+        clientId: name,
+        cmd: "chat",
+        msg: `[${name}] sending msg [${msgIdx++}]`,
+      };
+      ws.send(JSON.stringify({ data: msgData }));
+    }, 1000);
+  });
 }
 
 main();
