@@ -1,0 +1,130 @@
+{
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+  },
+  "editor.fontFamily": "'Dank Mono', 'Droid Sans Mono', 'monospace', monospace",
+  "editor.tabSize": 2,
+  "todo-tree.general.debug": false,
+  "todo-tree.general.showIconsInsteadOfTagsInStatusBar": false,
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.gpuAcceleration": "canvas",
+  "terminal.integrated.fontFamily": "'MesloLGL NF'",
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "name": "Comment",
+        "scope": [
+          "comment",
+          "comment.block",
+          "comment.block.documentation",
+          "comment.line",
+          "comment.line.double-slash",
+          "punctuation.definition.comment"
+        ],
+        "settings": {
+          "fontStyle": "italic"
+        }
+      }
+    ]
+  },
+  "todo-tree.general.rootFolder": "",
+  "todo-tree.highlights.enabled": true,
+  "todo-tree.general.schemes": [
+    "file",
+    "ssh",
+    "untitled",
+    "vscode-notebook-cell"
+  ],
+  "todo-tree.general.showActivityBarBadge": true,
+  "todo-tree.general.statusBar": "total",
+  "todo-tree.general.tags": [
+    "NOTE",
+    "TODO",
+    "FIXME",
+    "MARK",
+    "-Q",
+    "-A",
+    "[ ]",
+    "[x]",
+    "[-]",
+    "[.]"
+  ],
+  "todo-tree.highlights.defaultHighlight": {
+    "icon": "alert",
+    "type": "line",
+    "foreground": "#ffffff",
+    "background": "#ff0000",
+    "opacity": 100,
+    "iconColour": "#ff7711",
+    "borderRadius": "3px",
+    "fontStyle": "italic"
+  },
+  "todo-tree.highlights.customHighlight": {
+    "[.]": {
+      "foreground": "#1a1818",
+      "background": "#a5cdee"
+    },
+    "-Q": {
+      "foreground": "#1a1818",
+      "background": "#f88585"
+    },
+    "-A": {
+      "foreground": "#1a1818",
+      "background": "#95ec95"
+    },
+    "NOTE": {
+      "foreground": "#333333",
+      "background": "#f6f2b7",
+      "iconColour": "#ddc393",
+      "icon": "file"
+    },
+    "TODO": {
+      "icon": "check",
+      // "type": "line",
+      "foreground": "#000000",
+      "background": "#ffff00"
+    },
+    "FIXME": {
+      "foreground": "#ffffff",
+      "background": "#ff5858",
+      "iconColour": "#ffff00",
+      "gutterIcon": true
+    },
+    "MARK": {
+      "background": "#157EFB",
+      "iconColour": "#157EFB",
+      "icon": "tag"
+    },
+    "[ ]": {
+      "background": "#ff000080",
+      "iconColour": "#ff000080",
+      "icon": "square"
+    },
+    "[x]": {
+      "background": "#00ff0080",
+      "iconColour": "#00ff0080",
+      "icon": "square-fill"
+    },
+    "[-]": {
+      "background": "#c58526",
+      "iconColour": "#00ff0080",
+      "icon": "square-fill"
+    }
+  },
+  "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+}
