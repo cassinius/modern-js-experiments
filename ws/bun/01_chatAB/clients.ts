@@ -10,15 +10,23 @@ const names = ["Alice", "Bob"];
 
   ws.onopen = () => {
     console.log(`[${name}] connection established`);
-    ws.send(`[${name}] Hello, world!`);
+    // ws.send(`[${name}] Hello, world!`);
   };
 
   ws.onclose = () => {
     console.log(`[${name}] closed`);
   };
 
-  ws.onmessage = (event) => {
-    console.log(`[${name}] received: ${event.data}`);
+  ws.onmessage = ({ type, data }: { type: string; data: string }) => {
+    // console.log({ type, data });
+    if (data.startsWith("echo:")) {
+      const msgStrWoEcho = data.split(":").slice(1).join(":");
+      // console.log(msgStrWoEcho);
+      const msgStruct: { data: ClientWSMessage } = JSON.parse(msgStrWoEcho);
+      console.log(`[${name}]\t received: ${msgStruct.data.msg}`);
+    } else {
+      console.log(`[${name}]\t received RAW: ${data}`);
+    }
   };
 });
 
