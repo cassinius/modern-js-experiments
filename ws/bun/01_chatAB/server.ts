@@ -1,11 +1,20 @@
+import type { ServerWebSocket } from "bun";
+
+export type Cmd = "chat" | "subscribe" | "unsubscribe";
+export type Channel = "room-a" | "room-b" | "all";
+
 export type ClientWSMessage = {
-  clientId: string;
-  cmd?: string;
-  channel?: string;
+  cmd?: Cmd;
+  channel?: Channel;
   msg?: string;
 };
 
-const server = Bun.serve<{ clientId: string }>({
+type ServerWSData = { clientId: string };
+
+const roomA = new Set<ServerWebSocket<ServerWSData>>();
+const roomB = new Set<ServerWebSocket<ServerWSData>>();
+
+const server = Bun.serve<ServerWSData>({
   fetch(req, server) {
     // TODO: handle HTTP request headers, cookies, etc. *before* upgrading to WebSocket
     {
@@ -38,7 +47,38 @@ const server = Bun.serve<{ clientId: string }>({
     message(ws, message) {
       console.log(`clientId: ${ws.data?.clientId}`);
       console.log("received message", message);
-      ws.send("echo: " + message);
+
+      const data: { data: ClientWSMessage } = JSON.parse(message.toString());
+      const msgStruct = data.data;
+
+      switch (msgStruct.cmd) {
+        case "chat":
+          const channel = msgStruct.channel || "all";
+          const room = channel === "room-a" ? roomA : channel === "room-b" ? roomB : [...roomA, ...roomB];
+          for (const client of room) {
+            client.send("echo: " + message);
+            // client.send(JSON.stringify({ data: msgStruct }));
+          }
+          break;
+        case "subscribe":
+          if (msgStruct.channel === "room-a") {
+            console.log(`[${ws.data?.clientId}] subscribed to room-a`);
+            roomA.add(ws);
+          } else {
+            console.log(`[${ws.data?.clientId}] subscribed to room-b`);
+            roomB.add(ws);
+          }
+          break;
+        case "unsubscribe":
+          if (roomA.has(ws)) {
+            roomA.delete(ws);
+          } else {
+            roomB.delete(ws);
+          }
+          break;
+        default:
+          throw new Error(`Unknown command: ${msgStruct.cmd}`);
+      }
     },
     close(ws, code, reason) {
       console.log(`clientId: ${ws.data?.clientId}`);

@@ -28,6 +28,10 @@ const names = ["Alice", "Bob"];
       console.log(`[${name}]\t received RAW: ${data}`);
     }
   };
+
+  ws.onerror = (err) => {
+    console.error(`[${name}] error:`, err);
+  };
 });
 
 async function main() {
@@ -35,11 +39,28 @@ async function main() {
     const name = names[idx];
 
     let msgIdx = 0;
+
+    const subscribeMsg: ClientWSMessage = {
+      cmd: "subscribe",
+      // NOTE: Alice subscribes to room-a, Bob to room-b
+      channel: idx ? "room-b" : "room-a",
+    };
+
+    console.log(`[${name}] sending subscribe msg:`, subscribeMsg);
+
+    // NOTE: need to wait a bit before sending the subscribe message (after 'open')
+    setTimeout(() => {
+      ws.send(JSON.stringify({ data: subscribeMsg }));
+    }, 100);
+
     setInterval(() => {
+      const rand = Math.random();
+      const channel = rand < 0.33 ? "room-a" : rand < 0.66 ? "room-b" : "all";
+
       const msgData: ClientWSMessage = {
-        clientId: name,
         cmd: "chat",
-        msg: `[${name}] sending msg [${msgIdx++}]`,
+        channel,
+        msg: `[${name}] sending msg [${msgIdx++}] to [${channel}]`,
       };
       ws.send(JSON.stringify({ data: msgData }));
     }, 1000);
