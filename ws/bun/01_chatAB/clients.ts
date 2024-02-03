@@ -58,7 +58,7 @@ async function main() {
       const channel = rand < 0.33 ? "room-a" : rand < 0.66 ? "room-b" : "all";
 
       const msgData: ClientWSMessage = {
-        cmd: "chat",
+        cmd: "publish",
         channel,
         msg: `[${name}] sending msg [${msgIdx++}] to [${channel}]`,
       };

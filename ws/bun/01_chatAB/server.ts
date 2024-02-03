@@ -1,6 +1,6 @@
 import type { ServerWebSocket } from "bun";
 
-export type Cmd = "chat" | "subscribe" | "unsubscribe";
+export type Cmd = "publish" | "subscribe" | "unsubscribe";
 export type Channel = "room-a" | "room-b" | "all";
 
 export type ClientWSMessage = {
@@ -52,7 +52,7 @@ const server = Bun.serve<ServerWSData>({
       const msgStruct = data.data;
 
       switch (msgStruct.cmd) {
-        case "chat":
+        case "publish":
           const channel = msgStruct.channel || "all";
           const room = channel === "room-a" ? roomA : channel === "room-b" ? roomB : [...roomA, ...roomB];
           for (const client of room) {
