@@ -23,7 +23,7 @@ const names = ["Alice", "Bob"];
       const msgStrWoEcho = data.split(":").slice(1).join(":");
       // console.log(msgStrWoEcho);
       const msgStruct: { data: ClientWSMessage } = JSON.parse(msgStrWoEcho);
-      console.log(`[${name}]\t received: ${msgStruct.data.msg}`);
+      console.log(`[${name}]\t received: ${msgStruct.data.msgTxt}`);
     } else {
       console.log(`[${name}]\t received RAW: ${data}`);
     }
@@ -43,7 +43,7 @@ async function main() {
     const subscribeMsg: ClientWSMessage = {
       cmd: "subscribe",
       // NOTE: Alice subscribes to room-a, Bob to room-b
-      channel: idx ? "room-b" : "room-a",
+      room: idx ? "room-b" : "room-a",
     };
 
     console.log(`[${name}] sending subscribe msg:`, subscribeMsg);
@@ -59,8 +59,8 @@ async function main() {
 
       const msgData: ClientWSMessage = {
         cmd: "publish",
-        channel,
-        msg: `[${name}] sending msg [${msgIdx++}] to [${channel}]`,
+        room: channel,
+        msgTxt: `[${name}] sending msg [${msgIdx++}] to [${channel}]`,
       };
       ws.send(JSON.stringify({ data: msgData }));
     }, 1000);

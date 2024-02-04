@@ -1,12 +1,12 @@
 import type { ServerWebSocket } from "bun";
 
 export type Cmd = "publish" | "subscribe" | "unsubscribe";
-export type Channel = "room-a" | "room-b" | "all";
+export type Room = "room-a" | "room-b" | "all";
 
 export type ClientWSMessage = {
   cmd?: Cmd;
-  channel?: Channel;
-  msg?: string;
+  room?: Room;
+  msgTxt?: string;
 };
 
 type ServerWSData = { clientId: string };
@@ -53,7 +53,7 @@ const server = Bun.serve<ServerWSData>({
 
       switch (msgStruct.cmd) {
         case "publish":
-          const channel = msgStruct.channel || "all";
+          const channel = msgStruct.room || "all";
           const room = channel === "room-a" ? roomA : channel === "room-b" ? roomB : [...roomA, ...roomB];
           for (const client of room) {
             client.send("echo: " + message);
@@ -61,7 +61,7 @@ const server = Bun.serve<ServerWSData>({
           }
           break;
         case "subscribe":
-          if (msgStruct.channel === "room-a") {
+          if (msgStruct.room === "room-a") {
             console.log(`[${ws.data?.clientId}] subscribed to room-a`);
             roomA.add(ws);
           } else {
