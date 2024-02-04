@@ -14,19 +14,48 @@
 	}
 </script>
 
-<section style="padding-top: 50px;">
-	<button on:click={draw}> Let's draw </button>
-	<button on:click={reset}> Let's restart </button>
+<h2>Main chat</h2>
+<section class="main-chat">
+	<section class="chat-a">
+		<h4>Chat Room A</h4>
+		<p>Messages</p>
+	</section>
+
+	<section class="chat-b">
+		<h4>Chat Room B</h4>
+		<p>Messages</p>
+	</section>
 </section>
 
-<section>
-	<h2 style="text-align: center">
-		{dice == 0 ? "Let's start rolling" : dice}
-	</h2>
+<style lang="scss">
+	.main-chat {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		height: 100vh;
+		color: white;
+		background-color: red;
+	}
 
-	{#each rolls as t, index}
-		<p style="text-align: center">
-			Rolling number {index + 1}, the dice says {t}
-		</p>
-	{/each}
-</section>
+	.chat-a,
+	.chat-b {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		width: 100vw;
+		height: 100vh;
+		text-align: center;
+	}
+
+	.chat-a {
+		color: black;
+		background-color: #ece49c;
+	}
+
+	.chat-b {
+		color: grey;
+		background-color: #9ef5e9;
+	}
+</style>
