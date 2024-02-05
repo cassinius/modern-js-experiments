@@ -19,14 +19,16 @@ const server = Bun.serve<ServerWSData>({
     // TODO: handle HTTP request headers, cookies, etc. *before* upgrading to WebSocket
     {
     }
+
+    const clientId = Math.random().toString(36).slice(2)
     const up = server.upgrade(req, {
       headers: {
-        "Set-Cookie": `SessionId=${"blahoo"}`,
+        "Set-Cookie": `ClientId=${clientId}; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=31536000;`,
       },
       // NOTE: data is per-socket contextual data set by the *SERVER* (not the client)
       // NOTE: the client is only passing message data (as an argument to 'send')...
       data: {
-        clientId: Math.random().toString(36).slice(2),
+        clientId,
       },
     });
     if (up) {

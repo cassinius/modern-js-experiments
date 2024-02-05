@@ -53,7 +53,7 @@
 	});
 </script>
 
-<h2>Svelte chat WS experiment</h2>
+<h2 class="my-2 text-3xl text-center">Svelte chat WS experiment</h2>
 <section class="main-chat">
 	<section class="chat-a">
 		<h4>Chat Room A</h4>
