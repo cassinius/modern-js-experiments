@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import type { ClientWSMessage } from './../../../bun/01_chatAB/server.ts';
+	import type {
+		ClientWSMessage,
+		Cmd,
+		Room,
+		ServerWSMessage
+	} from './../../../bun/01_chatAB/server.ts';
 
 	let wsA: WebSocket;
 	let wsB: WebSocket;
@@ -11,12 +16,22 @@
 	let msgA = '';
 	let msgB = '';
 
+	let aASub = $state<boolean>(false);
+	let aBSub = $state<boolean>(false);
+	let bASub = $state<boolean>(false);
+	let bBSub = $state<boolean>(false);
+
+	function sendMsg(ws: WebSocket, cmd: Cmd, room: Room) {
+		ws.send(JSON.stringify({ cmd, room }));
+	}
+
 	onMount(() => {
 		wsA = new WebSocket('ws://localhost:3000');
 		wsB = new WebSocket('ws://localhost:3000');
 
 		const names = ['Alice', 'Bob'];
 
+		// TODO: how do I know which socket I am ?? => Just index for now...
 		[wsA, wsB].forEach((ws, idx) => {
 			const name = names[idx];
 
@@ -29,15 +44,36 @@
 				console.log(`[${name}] closed`);
 			};
 
-			ws.onmessage = ({ type, data }: { type: string; data: string }) => {
-				// console.log({ type, data });
-				if (data.startsWith('echo:')) {
-					const msgStrWoEcho = data.split(':').slice(1).join(':');
-					// console.log(msgStrWoEcho);
-					const msgStruct: { data: ClientWSMessage } = JSON.parse(msgStrWoEcho);
-					console.log(`[${name}]\t received: ${msgStruct.data.msgTxt}`);
-				} else {
-					console.log(`[${name}]\t received RAW: ${data}`);
+			ws.onmessage = (msg) => {
+				// console.log(`[${name}] message:`, msg);
+				try {
+					const { type, room, outcome } = JSON.parse(msg.data) as ServerWSMessage;
+					console.log({ type, outcome, room });
+
+					switch (type) {
+						case 'sub':
+							if (outcome === 'success') {
+								if (room === 'room-a') {
+									idx ? (bASub = true) : (aASub = true);
+								} else {
+									idx ? (bBSub = true) : (aBSub = true);
+								}
+							}
+							break;
+						case 'unsub':
+							if (outcome === 'success') {
+								if (room === 'room-a') {
+									idx ? (bASub = false) : (aASub = false);
+								} else {
+									idx ? (bBSub = false) : (aBSub = false);
+								}
+							}
+							break;
+						default:
+							return false;
+					}
+				} catch (e) {
+					// TODO: all messages should "behave" structurally...
 				}
 			};
 
@@ -55,13 +91,33 @@
 
 <h2 class="my-2 text-3xl text-center">Svelte chat WS experiment</h2>
 <section class="main-chat">
-	<section class="chat-a">
-		<h4>Chat Room A</h4>
+	<section class="chat-alice">
+		<h4>Alice Chats</h4>
+		<section class="unsub-controls">
+			{#if aASub}
+				<button class="btn btn-primary" on:click={() => sendMsg(wsA, 'unsubscribe', 'room-a')}
+					>Unsub A</button
+				>
+			{:else}
+				<button class="btn btn-success" on:click={() => sendMsg(wsA, 'subscribe', 'room-a')}
+					>SubA</button
+				>
+			{/if}
+			{#if aBSub}
+				<button class="btn btn-primary" on:click={() => sendMsg(wsA, 'unsubscribe', 'room-b')}
+					>Unsub B</button
+				>
+			{:else}
+				<button class="btn btn-success" on:click={() => sendMsg(wsA, 'subscribe', 'room-b')}
+					>Sub B</button
+				>
+			{/if}
+		</section>
 		<p>Messages</p>
 	</section>
 
-	<section class="chat-b">
-		<h4>Chat Room B</h4>
+	<section class="chat-bob">
+		<h4>Bob Chats</h4>
 		<p>Messages</p>
 	</section>
 </section>
@@ -77,8 +133,8 @@
 		background-color: red;
 	}
 
-	.chat-a,
-	.chat-b {
+	.chat-alice,
+	.chat-bob {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -88,12 +144,12 @@
 		text-align: center;
 	}
 
-	.chat-a {
+	.chat-alice {
 		color: black;
 		background-color: #ece49c;
 	}
 
-	.chat-b {
+	.chat-bob {
 		color: grey;
 		background-color: #9ef5e9;
 	}

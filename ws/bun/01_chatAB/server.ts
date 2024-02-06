@@ -9,6 +9,14 @@ export type ClientWSMessage = {
   msgTxt?: string;
 };
 
+export type ResultType = "sub" | "unsub";
+export type ResultOutcome = "success" | "failure";
+export type ServerWSMessage = {
+  type: ResultType,
+  room: Room,
+  outcome: ResultOutcome
+}
+
 type ServerWSData = { clientId: string };
 
 const roomA = new Set<ServerWebSocket<ServerWSData>>();
@@ -50,8 +58,8 @@ const server = Bun.serve<ServerWSData>({
       console.log(`clientId: ${ws.data?.clientId}`);
       console.log("received message", message);
 
-      const data: { data: ClientWSMessage } = JSON.parse(message.toString());
-      const msgStruct = data.data;
+      const msgStruct: ClientWSMessage = JSON.parse(message.toString());
+      console.log({ msgStruct });
 
       switch (msgStruct.cmd) {
         case "publish":
@@ -63,13 +71,17 @@ const server = Bun.serve<ServerWSData>({
           }
           break;
         case "subscribe":
-          if (msgStruct.room === "room-a") {
-            console.log(`[${ws.data?.clientId}] subscribed to room-a`);
-            roomA.add(ws);
-          } else {
-            console.log(`[${ws.data?.clientId}] subscribed to room-b`);
-            roomB.add(ws);
-          }
+          let roomSock = msgStruct.room === "room-a" ? roomA : roomB;
+          roomSock.add(ws);
+          
+          const response: ServerWSMessage = {
+            type: 'sub',
+            room: msgStruct.room!,
+            outcome: 'success'
+          };
+          ws.send(JSON.stringify(response));
+          console.log(`[${ws.data?.clientId}] subscribed to ${msgStruct.room}`);
+
           break;
         case "unsubscribe":
           if (roomA.has(ws)) {
