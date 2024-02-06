@@ -38,7 +38,7 @@
 
 		conn.onmessage = (msg) => {
 			try {
-				const { type, room, outcome } = JSON.parse(msg.data) as ServerWSMessage;
+				const { type, room, outcome, msgTxt } = JSON.parse(msg.data) as ServerWSMessage;
 				console.log({ type, outcome, room });
 
 				switch (type) {
@@ -58,6 +58,20 @@
 							} else {
 								subB = false;
 							}
+						}
+						break;
+					case 'msg':
+						console.log({});
+						if (room === 'room-a' && subA) {
+							msgsA.push(JSON.parse(msg.data));
+						} else if (room === 'room-b' && subB) {
+							msgsB.push(JSON.parse(msg.data));
+						}
+						// NOTE: if we wanted to make this more secure by not doing client-side checks,
+						// NOTE: we would need to open a new connection for each room...
+						else if (room === 'all') {
+							subA && msgsA.push(JSON.parse(msg.data));
+							subB && msgsB.push(JSON.parse(msg.data));
 						}
 						break;
 					default:
@@ -128,7 +142,7 @@
           const newClientMsg: ClientWSMessage = {
             msgTxt: newMsgTxt,
             from: name,
-            cmd: 'send',
+            cmd: 'publish',
             room: 'room-a'
           }
           conn.send(JSON.stringify(newClientMsg));
@@ -143,7 +157,7 @@
 					const newClientMsg: ClientWSMessage = {
             msgTxt: newMsgTxt,
             from: name,
-            cmd: 'send',
+            cmd: 'publish',
             room: 'room-b'
           }
           conn.send(JSON.stringify(newClientMsg));

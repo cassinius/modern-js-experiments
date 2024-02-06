@@ -1,6 +1,6 @@
 import type { ServerWebSocket } from "bun";
 
-export type Cmd = "send" | "publish" | "subscribe" | "unsubscribe";
+export type Cmd = "publish" | "subscribe" | "unsubscribe";
 export type Room = "room-a" | "room-b" | "all";
 
 export type ClientWSMessage = {
@@ -10,18 +10,31 @@ export type ClientWSMessage = {
   msgTxt?: string;
 };
 
-export type ResultType = "sub" | "unsub";
+export type ResultType = "sub" | "unsub" | "msg";
 export type ResultOutcome = "success" | "failure";
 export type ServerWSMessage = {
   type: ResultType,
   room: Room,
-  outcome: ResultOutcome
+  outcome?: ResultOutcome,
+  msgTxt?: string,
 }
 
 type ServerWSData = { clientId: string };
 
 const roomA = new Set<ServerWebSocket<ServerWSData>>();
 const roomB = new Set<ServerWebSocket<ServerWSData>>();
+
+// NOTE: periodically send a message to all clients
+setInterval(() => {
+  for (const client of [...roomA, ...roomB]) {
+    const srvMsg: ServerWSMessage = {
+      type: 'msg',
+      room: 'all',
+      msgTxt: `[SYSTEM] Keepalive, ${client.data?.clientId}!`,
+    };
+    client.send(JSON.stringify(srvMsg));
+  }
+}, 5000);
 
 const server = Bun.serve<ServerWSData>({
   fetch(req, server) {
@@ -63,21 +76,32 @@ const server = Bun.serve<ServerWSData>({
       // console.log({ msgStruct });
 
       let chatRoom: Set<ServerWebSocket<ServerWSData>>;
+      let response: ServerWSMessage;
 
       switch (msgStruct.cmd) {
         case "publish":
           const channel = msgStruct.room || "all";
-          const room = channel === "room-a" ? roomA : channel === "room-b" ? roomB : [...roomA, ...roomB];
+          const room =
+            channel === "room-a" ? roomA :
+              channel === "room-b" ? roomB :
+                [...roomA, ...roomB];
+          response = {
+            type: 'msg',
+            room: channel,
+            msgTxt: msgStruct.msgTxt!,
+            outcome: 'success'
+          };
+
           for (const client of room) {
-            client.send("echo: " + message);
-            // client.send(JSON.stringify({ data: msgStruct }));
+            client.send(JSON.stringify(response));
           }
+
           break;
         case "subscribe":
           chatRoom = msgStruct.room === "room-a" ? roomA : roomB;
           chatRoom.add(ws);
 
-          const response: ServerWSMessage = {
+          response = {
             type: 'sub',
             room: msgStruct.room!,
             outcome: 'success'
@@ -103,6 +127,7 @@ const server = Bun.serve<ServerWSData>({
             console.log(`[${ws.data?.clientId}] unsubscribed from ${msgStruct.room}`);
             console.log(`Chat-${msgStruct.room} has ${chatRoom.size} members`);
           }
+
           break;
         default:
           throw new Error(`Unknown command: ${msgStruct.cmd}`);
