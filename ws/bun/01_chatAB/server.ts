@@ -1,11 +1,12 @@
 import type { ServerWebSocket } from "bun";
 
-export type Cmd = "publish" | "subscribe" | "unsubscribe";
+export type Cmd = "send" | "publish" | "subscribe" | "unsubscribe";
 export type Room = "room-a" | "room-b" | "all";
 
 export type ClientWSMessage = {
   cmd?: Cmd;
   room?: Room;
+  from?: string;
   msgTxt?: string;
 };
 

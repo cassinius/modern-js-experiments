@@ -2,20 +2,10 @@
 	import PersonalChats from '../components/PersonalChats.svelte';
 </script>
 
-<h2 class="h-[2.2rem] my-2 text-3xl text-center">Svelte chat WS experiment</h2>
-<section class="main-chat">
-	<PersonalChats name="Alice" />
-	<PersonalChats name="Bob" />
+<section class="main h-screen max-h-screen flex flex-col">
+	<h2 class="my-2 text-3xl text-center">Svelte chat WS experiment</h2>
+	<section class="main-chat flex flex-row flex-1 text-white bg-red">
+		<PersonalChats name="Alice" />
+		<PersonalChats name="Bob" />
+	</section>
 </section>
-
-<style lang="scss">
-	.main-chat {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		justify-content: center;
-		height: calc(100vh - 2.2rem);
-		color: white;
-		background-color: red;
-	}
-</style>
