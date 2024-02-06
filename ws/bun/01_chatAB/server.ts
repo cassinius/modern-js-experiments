@@ -110,6 +110,11 @@ const server = Bun.serve<ServerWSData>({
     close(ws, code, reason) {
       console.log(`clientId: ${ws.data?.clientId}`);
       console.log("closed WS connection", ws.data?.clientId, code, reason);
+      for (const room of [roomA, roomB]) {
+        if (room.has(ws)) {
+          room.delete(ws);
+        }
+      }
       ws.send(`Goodbye, ${ws.data?.clientId}`);
     },
   },
