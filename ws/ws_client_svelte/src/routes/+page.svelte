@@ -92,10 +92,10 @@
 <h2 class="my-2 text-3xl text-center">Svelte chat WS experiment</h2>
 <section class="main-chat">
 	<section class="chat-alice">
-		<h4>Alice Chats</h4>
+		<h4 class="text-lg">Alice Chats</h4>
 		<section class="unsub-controls">
 			{#if aASub}
-				<button class="btn btn-primary" on:click={() => sendMsg(wsA, 'unsubscribe', 'room-a')}
+				<button class="btn btn-error" on:click={() => sendMsg(wsA, 'unsubscribe', 'room-a')}
 					>Unsub A</button
 				>
 			{:else}
@@ -104,7 +104,7 @@
 				>
 			{/if}
 			{#if aBSub}
-				<button class="btn btn-primary" on:click={() => sendMsg(wsA, 'unsubscribe', 'room-b')}
+				<button class="btn btn-error" on:click={() => sendMsg(wsA, 'unsubscribe', 'room-b')}
 					>Unsub B</button
 				>
 			{:else}
@@ -113,12 +113,62 @@
 				>
 			{/if}
 		</section>
-		<p>Messages</p>
+
+		<section class="messages">
+			<h3 class="text-lg">Messages</h3>
+
+			<section class="msg-list-a">
+				{#each msgsA as msg (msg.msgTxt)}
+					<p class="msg">{msg.msgTxt}</p>
+				{/each}
+			</section>
+
+			<section class="msg-list-b">
+				{#each msgsB as msg (msg.msgTxt)}
+					<p class="msg">{msg.msgTxt}</p>
+				{/each}
+			</section>
+		</section>
 	</section>
 
 	<section class="chat-bob">
-		<h4>Bob Chats</h4>
-		<p>Messages</p>
+		<h4 class="text-lg">Bob Chats</h4>
+		<section class="unsub-controls">
+			{#if bASub}
+				<button class="btn btn-error" on:click={() => sendMsg(wsB, 'unsubscribe', 'room-a')}
+					>Unsub A</button
+				>
+			{:else}
+				<button class="btn btn-success" on:click={() => sendMsg(wsB, 'subscribe', 'room-a')}
+					>SubA</button
+				>
+			{/if}
+			{#if bBSub}
+				<button class="btn btn-error" on:click={() => sendMsg(wsB, 'unsubscribe', 'room-b')}
+					>Unsub B</button
+				>
+			{:else}
+				<button class="btn btn-success" on:click={() => sendMsg(wsB, 'subscribe', 'room-b')}
+					>Sub B</button
+				>
+			{/if}
+		</section>
+
+		<section class="messages">
+			<h3 class="text-lg">Messages</h3>
+
+			<section class="msg-list-a">
+				{#each msgsA as msg (msg.msgTxt)}
+					<p class="msg">{msg.msgTxt}</p>
+				{/each}
+			</section>
+
+			<section class="msg-list-b">
+				{#each msgsB as msg (msg.msgTxt)}
+					<p class="msg">{msg.msgTxt}</p>
+				{/each}
+			</section>
+		</section>
 	</section>
 </section>
 
@@ -135,13 +185,28 @@
 
 	.chat-alice,
 	.chat-bob {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
+		// display: flex;
+		// flex-direction: column;
+		// align-items: center;
+		// justify-content: center;
 		width: 100vw;
 		height: 100vh;
 		text-align: center;
+
+		.messages {
+			display: flex;
+			flex-direction: row;
+
+			background-color: #eee;
+
+			.msg-list-a,
+			.msg-list-b {
+				// display: flex;
+				// flex-direction: column;
+				// align-items: center;
+				// justify-content: center;
+			}
+		}
 	}
 
 	.chat-alice {

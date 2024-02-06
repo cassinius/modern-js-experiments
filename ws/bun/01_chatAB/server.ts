@@ -55,11 +55,13 @@ const server = Bun.serve<ServerWSData>({
       // ws.subscribe('chat-room-XYZ');
     },
     message(ws, message) {
-      console.log(`clientId: ${ws.data?.clientId}`);
-      console.log("received message", message);
+      // console.log(`clientId: ${ws.data?.clientId}`);
+      // console.log("received message", message);
 
       const msgStruct: ClientWSMessage = JSON.parse(message.toString());
-      console.log({ msgStruct });
+      // console.log({ msgStruct });
+
+      let chatRoom: Set<ServerWebSocket<ServerWSData>>;
 
       switch (msgStruct.cmd) {
         case "publish":
@@ -71,23 +73,34 @@ const server = Bun.serve<ServerWSData>({
           }
           break;
         case "subscribe":
-          let roomSock = msgStruct.room === "room-a" ? roomA : roomB;
-          roomSock.add(ws);
-          
+          chatRoom = msgStruct.room === "room-a" ? roomA : roomB;
+          chatRoom.add(ws);
+
           const response: ServerWSMessage = {
             type: 'sub',
             room: msgStruct.room!,
             outcome: 'success'
           };
           ws.send(JSON.stringify(response));
+
           console.log(`[${ws.data?.clientId}] subscribed to ${msgStruct.room}`);
+          console.log(`Chat-${msgStruct.room} has ${chatRoom.size} members`);
 
           break;
         case "unsubscribe":
-          if (roomA.has(ws)) {
-            roomA.delete(ws);
-          } else {
-            roomB.delete(ws);
+          chatRoom = msgStruct.room === "room-a" ? roomA : roomB;
+
+          if (chatRoom.has(ws)) {
+            chatRoom.delete(ws);
+            const response: ServerWSMessage = {
+              type: 'unsub',
+              room: msgStruct.room!,
+              outcome: 'success'
+            };
+            ws.send(JSON.stringify(response));
+
+            console.log(`[${ws.data?.clientId}] unsubscribed from ${msgStruct.room}`);
+            console.log(`Chat-${msgStruct.room} has ${chatRoom.size} members`);
           }
           break;
         default:
