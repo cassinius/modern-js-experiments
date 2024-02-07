@@ -9,13 +9,14 @@
 
 	let conn: WebSocket;
 
-	const msgsA = $state<ClientWSMessage[]>([]);
-	const msgsB = $state<ClientWSMessage[]>([]);
+	const msgsA = $state<ServerWSMessage[]>([]);
+	const msgsB = $state<ServerWSMessage[]>([]);
 
 	let newMsgTxt = $state<string>('');
 
 	let subA = $state<boolean>(false);
 	let subB = $state<boolean>(false);
+	let subSys = $state<boolean>(false);
 
 	// NOTE: forgive the hack...
 	const textColor = 'text-gray-800'; // name === 'Alice' ? 'text-gray-700' : 'text-blue-500';
@@ -38,8 +39,12 @@
 
 		conn.onmessage = (msg) => {
 			try {
-				const { type, room, outcome, msgTxt } = JSON.parse(msg.data) as ServerWSMessage;
-				console.log({ type, outcome, room });
+				const { type, room, outcome, msgTxt, sender } = JSON.parse(msg.data) as ServerWSMessage;
+				// console.log({ type, outcome, room, msgTxt, sender});
+
+				if (type === 'msg' && sender == 'SYSTEM' && !subSys) {
+					return;
+				}
 
 				switch (type) {
 					case 'sub':
@@ -70,6 +75,7 @@
 						// NOTE: if we wanted to make this more secure by not doing client-side checks,
 						// NOTE: we would need to open a new connection for each room...
 						else if (room === 'all') {
+							console.log('got message for all rooms');
 							subA && msgsA.push(JSON.parse(msg.data));
 							subB && msgsB.push(JSON.parse(msg.data));
 						}
@@ -101,12 +107,19 @@
 		{:else}
 			<button class="btn btn-success" on:click={() => sendMsg('subscribe', 'room-a')}>SubA</button>
 		{/if}
+
 		{#if subB}
 			<button class="btn btn-error" on:click={() => sendMsg('unsubscribe', 'room-b')}
 				>Unsub B</button
 			>
 		{:else}
 			<button class="btn btn-success" on:click={() => sendMsg('subscribe', 'room-b')}>Sub B</button>
+		{/if}
+
+		{#if subSys}
+			<button class="btn btn-error" on:click={() => (subSys = false)}>No Sys</button>
+		{:else}
+			<button class="btn btn-success" on:click={() => (subSys = true)}>Sys</button>
 		{/if}
 	</section>
 
@@ -117,14 +130,14 @@
 			<section class="msg-list-a flex-1 m-1 p-1 text-left bg-orange-200 text-black rounded-lg">
 				<p>Room A</p>
 				{#each msgsA as msg (msg.msgTxt)}
-					<p class="msg">{msg.msgTxt}</p>
+					<p class="msg">[{msg.sender}] {msg.msgTxt}</p>
 				{/each}
 			</section>
 
 			<section class="msg-list-b flex-1 m-1 p-1 text-left bg-blue-200 text-black rounded-lg">
 				<p>Room B</p>
 				{#each msgsB as msg (msg.msgTxt)}
-					<p class="msg">{msg.msgTxt}</p>
+					<p class="msg">[{msg.sender}] {msg.msgTxt}</p>
 				{/each}
 			</section>
 		</section>
@@ -136,6 +149,7 @@
 				bind:value={newMsgTxt}
 				placeholder="Type a message..."
 			/>
+
 			<button
 				class="btn btn-primary m-1 px-2 rounded-lg"
 				on:click={() => {
@@ -151,6 +165,7 @@
 			>
 				-> A
 			</button>
+
 			<button
 				class="btn btn-primary m-1 px-2 rounded-lg"
 				on:click={() => {
@@ -165,6 +180,39 @@
 				}}
 			>
 				-> B
+			</button>
+
+      <button
+				class="btn btn-primary m-1 px-2 rounded-lg"
+				on:click={() => {
+					const newClientMsg: ClientWSMessage = {
+            msgTxt: newMsgTxt,
+            from: name,
+            cmd: 'publish',
+            room: 'all'
+          }
+          conn.send(JSON.stringify(newClientMsg));
+					newMsgTxt = '';
+				}}
+			>
+				-> All
+			</button>
+
+      <button
+				class="btn btn-primary m-1 px-2 rounded-lg"
+				on:click={() => {
+					const newClientMsg: ClientWSMessage = {
+            msgTxt: newMsgTxt,
+            from: name,
+            cmd: 'publish',
+            room: 'all',
+            other: true
+          }
+          conn.send(JSON.stringify(newClientMsg));
+					newMsgTxt = '';
+				}}
+			>
+				-> Other
 			</button>
 		</section>
 	</section>

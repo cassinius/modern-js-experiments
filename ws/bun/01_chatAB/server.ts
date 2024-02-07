@@ -8,6 +8,7 @@ export type ClientWSMessage = {
   room?: Room;
   from?: string;
   msgTxt?: string;
+  other?: boolean;
 };
 
 export type ResultType = "sub" | "unsub" | "msg";
@@ -15,6 +16,7 @@ export type ResultOutcome = "success" | "failure";
 export type ServerWSMessage = {
   type: ResultType,
   room: Room,
+  sender?: string,
   outcome?: ResultOutcome,
   msgTxt?: string,
 }
@@ -24,13 +26,16 @@ type ServerWSData = { clientId: string };
 const roomA = new Set<ServerWebSocket<ServerWSData>>();
 const roomB = new Set<ServerWebSocket<ServerWSData>>();
 
-// NOTE: periodically send a message to all clients
+// NOTE: periodically send a message to all clients.
+// TODO de-duplicate WS connections from different rooms.
 setInterval(() => {
-  for (const client of [...roomA, ...roomB]) {
+  const allRooms = new Set([...roomA, ...roomB]);
+  for (const client of allRooms) {
     const srvMsg: ServerWSMessage = {
       type: 'msg',
       room: 'all',
-      msgTxt: `[SYSTEM] Keepalive, ${client.data?.clientId}!`,
+      sender: 'SYSTEM',
+      msgTxt: `Keepalive, ${client.data?.clientId}!`,
     };
     client.send(JSON.stringify(srvMsg));
   }
@@ -84,15 +89,19 @@ const server = Bun.serve<ServerWSData>({
           const room =
             channel === "room-a" ? roomA :
               channel === "room-b" ? roomB :
-                [...roomA, ...roomB];
+                new Set([...roomA, ...roomB]);
           response = {
             type: 'msg',
             room: channel,
+            sender: msgStruct.from,
             msgTxt: msgStruct.msgTxt!,
             outcome: 'success'
           };
 
           for (const client of room) {
+            if (msgStruct.other && client.data?.clientId === ws.data?.clientId) {
+              continue;
+            }
             client.send(JSON.stringify(response));
           }
 
