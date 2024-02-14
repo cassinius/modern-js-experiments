@@ -27,9 +27,10 @@
 	}
 
 	onMount(() => {
-		conn = new WebSocket('ws://localhost:3000');
+		conn = new WebSocket('ws://localhost:3000?name=' + name);
 
-		conn.onopen = () => {
+		conn.onopen = (res) => {
+			console.log({ res });
 			console.log(`[${name}] connection established`);
 		};
 
@@ -182,7 +183,7 @@
 				-> B
 			</button>
 
-      <button
+			<button
 				class="btn btn-primary m-1 px-2 rounded-lg"
 				on:click={() => {
 					const newClientMsg: ClientWSMessage = {
@@ -198,7 +199,7 @@
 				-> All
 			</button>
 
-      <button
+			<button
 				class="btn btn-primary m-1 px-2 rounded-lg"
 				on:click={() => {
 					const newClientMsg: ClientWSMessage = {

@@ -14,17 +14,18 @@ export type ClientWSMessage = {
 export type ResultType = "sub" | "unsub" | "msg";
 export type ResultOutcome = "success" | "failure";
 export type ServerWSMessage = {
-  type: ResultType,
-  room: Room,
-  sender?: string,
-  outcome?: ResultOutcome,
-  msgTxt?: string,
-}
+  type: ResultType;
+  room: Room;
+  sender?: string;
+  outcome?: ResultOutcome;
+  msgTxt?: string;
+};
 
 type ServerWSData = { clientId: string };
 
 const roomA = new Set<ServerWebSocket<ServerWSData>>();
 const roomB = new Set<ServerWebSocket<ServerWSData>>();
+// const wsLut = new Map<string, ServerWebSocket<ServerWSData>>();
 
 // NOTE: periodically send a message to all clients.
 // TODO de-duplicate WS connections from different rooms.
@@ -32,9 +33,9 @@ setInterval(() => {
   const allRooms = new Set([...roomA, ...roomB]);
   for (const client of allRooms) {
     const srvMsg: ServerWSMessage = {
-      type: 'msg',
-      room: 'all',
-      sender: 'SYSTEM',
+      type: "msg",
+      room: "all",
+      sender: "SYSTEM",
       msgTxt: `Keepalive, ${client.data?.clientId}!`,
     };
     client.send(JSON.stringify(srvMsg));
@@ -43,14 +44,15 @@ setInterval(() => {
 
 const server = Bun.serve<ServerWSData>({
   fetch(req, server) {
-    // TODO: handle HTTP request headers, cookies, etc. *before* upgrading to WebSocket
-    {
-    }
+    // NOTE: handle HTTP request headers, cookies, etc. *before* upgrading to WebSocket
+    const { searchParams } = new URL(req.url);
+    // console.log({ searchParams });
 
-    const clientId = Math.random().toString(36).slice(2)
+    const clientId = searchParams.get("name") || "anonymous";
     const up = server.upgrade(req, {
+      // NOTE: this is useless for several clients on a page ;-)
       headers: {
-        "Set-Cookie": `ClientId=${clientId}; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=31536000;`,
+        // "Set-Cookie": `ClientId=${clientId}; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=31536000;`,
       },
       // NOTE: data is per-socket contextual data set by the *SERVER* (not the client)
       // NOTE: the client is only passing message data (as an argument to 'send')...
@@ -63,13 +65,16 @@ const server = Bun.serve<ServerWSData>({
       return undefined;
     }
 
-    return new Response("Hello, HTTP world!");
+    return new Response(JSON.stringify({ connect: "ok", clientId }), {
+      status: 200,
+    });
   },
   websocket: {
     open(ws) {
-      console.log(`clientId: ${ws.data?.clientId}`);
-      console.log("created WS connection for client", ws.data?.clientId);
+      // console.log(`clientId: ${ws.data?.clientId}`);
+      console.log("created WS connection for", ws.data?.clientId);
       ws.send(`Welcome to the chat, ${ws.data?.clientId} ;-)`);
+
       // TODO: here we could also do subscriptions ?!
       // ws.subscribe('chat-room-XYZ');
     },
@@ -87,19 +92,24 @@ const server = Bun.serve<ServerWSData>({
         case "publish":
           const channel = msgStruct.room || "all";
           const room =
-            channel === "room-a" ? roomA :
-              channel === "room-b" ? roomB :
-                new Set([...roomA, ...roomB]);
+            channel === "room-a"
+              ? roomA
+              : channel === "room-b"
+              ? roomB
+              : new Set([...roomA, ...roomB]);
           response = {
-            type: 'msg',
+            type: "msg",
             room: channel,
             sender: msgStruct.from,
             msgTxt: msgStruct.msgTxt!,
-            outcome: 'success'
+            outcome: "success",
           };
 
           for (const client of room) {
-            if (msgStruct.other && client.data?.clientId === ws.data?.clientId) {
+            if (
+              msgStruct.other &&
+              client.data?.clientId === ws.data?.clientId
+            ) {
               continue;
             }
             client.send(JSON.stringify(response));
@@ -111,9 +121,9 @@ const server = Bun.serve<ServerWSData>({
           chatRoom.add(ws);
 
           response = {
-            type: 'sub',
+            type: "sub",
             room: msgStruct.room!,
-            outcome: 'success'
+            outcome: "success",
           };
           ws.send(JSON.stringify(response));
 
@@ -127,13 +137,15 @@ const server = Bun.serve<ServerWSData>({
           if (chatRoom.has(ws)) {
             chatRoom.delete(ws);
             const response: ServerWSMessage = {
-              type: 'unsub',
+              type: "unsub",
               room: msgStruct.room!,
-              outcome: 'success'
+              outcome: "success",
             };
             ws.send(JSON.stringify(response));
 
-            console.log(`[${ws.data?.clientId}] unsubscribed from ${msgStruct.room}`);
+            console.log(
+              `[${ws.data?.clientId}] unsubscribed from ${msgStruct.room}`
+            );
             console.log(`Chat-${msgStruct.room} has ${chatRoom.size} members`);
           }
 
@@ -143,8 +155,12 @@ const server = Bun.serve<ServerWSData>({
       }
     },
     close(ws, code, reason) {
-      console.log(`clientId: ${ws.data?.clientId}`);
-      console.log("closed WS connection", ws.data?.clientId, code, reason);
+      // console.log(`clientId: ${ws.data?.clientId}`);
+      console.log(
+        `closed WS connection for ${ws.data?.clientId}`,
+        code,
+        reason
+      );
       for (const room of [roomA, roomB]) {
         if (room.has(ws)) {
           room.delete(ws);
