@@ -1,2 +1,3 @@
-# elysia-experiments
-Playground for learning / experimenting with &amp; enhancing / writing plugins for Elysia.js
+# modern-js-experiments
+
+Playground for learning / experimenting with *"modern"* JS -> Bun, Elysia, Hono, WinterJS, you name it...
